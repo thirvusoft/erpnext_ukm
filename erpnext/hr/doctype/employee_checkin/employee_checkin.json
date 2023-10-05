@@ -24,6 +24,7 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Employee",
    "options": "Employee",
    "reqd": 1,
@@ -80,8 +81,7 @@
    "fieldname": "attendance",
    "fieldtype": "Link",
    "label": "Attendance Marked",
-   "options": "Attendance",
-   "read_only": 1
+   "options": "Attendance"
   },
   {
    "fieldname": "shift_start",
@@ -109,7 +109,7 @@
   }
  ],
  "links": [],
- "modified": "2022-07-19 15:38:41.767539",
+ "modified": "2023-02-17 20:22:20.318655",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Employee Checkin",

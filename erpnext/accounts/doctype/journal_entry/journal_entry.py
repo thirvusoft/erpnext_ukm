@@ -614,7 +614,8 @@ class JournalEntry(AccountsController):
 	def validate_debit_credit_amount(self):
 		for d in self.get("accounts"):
 			if not flt(d.debit) and not flt(d.credit):
-				frappe.throw(_("Row {0}: Both Debit and Credit values cannot be zero").format(d.idx))
+				pass
+				# frappe.throw(_("Row {0}: Both Debit and Credit values cannot be zero").format(d.idx))
 
 	def validate_total_debit_and_credit(self):
 		self.set_total_debit_credit()

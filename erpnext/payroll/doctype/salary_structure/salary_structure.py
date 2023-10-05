@@ -256,7 +256,7 @@ def create_salary_structures_assignment(
 	assignment.variable = variable
 	assignment.income_tax_slab = income_tax_slab
 	assignment.save(ignore_permissions=True)
-	assignment.submit()
+	# assignment.submit()
 	return assignment.name
 
 

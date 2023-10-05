@@ -7,9 +7,9 @@ frappe.ui.form.on("Naming Series", {
 		frm.events.get_doc_and_prefix(frm);
 	},
 
-	refresh: function(frm) {
-		frm.disable_save();
-	},
+	// refresh: function(frm) {
+	// 	frm.disable_save();
+	// },
 
 	get_doc_and_prefix: function(frm) {
 		frappe.call({

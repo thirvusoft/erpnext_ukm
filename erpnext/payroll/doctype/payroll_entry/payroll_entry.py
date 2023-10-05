@@ -76,16 +76,10 @@ class PayrollEntry(Document):
 			)
 
 	def on_cancel(self):
-		frappe.delete_doc(
-			"Salary Slip",
-			frappe.db.sql_list(
-				"""select name from `tabSalary Slip`
-			where payroll_entry=%s """,
-				(self.name),
-			),
-		)
-		self.db_set("salary_slips_created", 0)
-		self.db_set("salary_slips_submitted", 0)
+		# Customized By Thirvusoft
+		# Start
+		frappe.enqueue(salary_slip_delete, self=self,  queue="long")
+		# End
 
 	def get_emp_list(self):
 		"""
@@ -603,7 +597,12 @@ def get_emp_list(sal_struct, cond, end_date, payroll_payable_account):
 				t1.name = t2.employee
 				and t2.docstatus = 1
 				and t1.status != 'Inactive'
-		%s order by t2.from_date desc
+				and IFNULL(t1.bank_name, "") !=""
+				and IFNULL(t1.ts_bank_branch_name, "") !=""
+				and IFNULL(t1.bank_ac_no, "") !=""
+				and IFNULL(t1.ifsc_code, "") !=""
+
+		%s order by t2.employee
 		"""
 		% cond,
 		{
@@ -924,3 +923,42 @@ def employee_query(doctype, txt, searchfield, start, page_len, filters):
 			"include_employees": include_employees,
 		},
 	)
+
+# Customized By Thirvusoft
+# Start
+def salary_slip_delete(self):
+	# Customized By Thirvusoft
+	# Start
+
+	salary_slip_list = frappe.get_all("Salary Slip",{"payroll_entry": self.name})
+
+	count = 0
+
+	for slip_list in salary_slip_list:
+		
+		count += 1
+
+		slip_list_doc = frappe.get_doc("Salary Slip",slip_list)
+
+		if slip_list_doc.docstatus == 1:
+
+			slip_list_doc.cancel(ignore_permissions = True)
+		
+		frappe.delete_doc('Salary Slip', slip_list_doc.name, ignore_permissions = True)
+
+		if count == 20:
+			count = 0
+			frappe.db.commit()
+
+		# frappe.delete_doc(
+		# 	"Salary Slip",
+		# 	frappe.db.sql_list(
+		# 		"""select name from `tabSalary Slip`
+		# 	where payroll_entry=%s """,
+		# 		(self.name),ignore_permissions=True,
+		# 	),
+		# )
+		self.db_set("salary_slips_created", 0)
+		self.db_set("salary_slips_submitted", 0)
+	# End
+# End

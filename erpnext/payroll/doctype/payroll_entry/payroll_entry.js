@@ -111,7 +111,7 @@ frappe.ui.form.on('Payroll Entry', {
 				'name': frm.doc.name
 			},
 			callback: function (r) {
-				if (r.message && !r.message.submitted) {
+				if (r.message && !r.message.submitted && frappe.session.user =='Administrator') {
 					frm.add_custom_button("Make Bank Entry", function () {
 						make_bank_entry(frm);
 					}).addClass("btn-primary");

@@ -135,12 +135,12 @@
    "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "fetch_from": "employee.department",
    "fieldname": "department",
    "fieldtype": "Link",
    "label": "Department",
-   "options": "Department",
-   "read_only": 1
+   "options": "Department"
   },
   {
    "fieldname": "shift",
@@ -205,13 +205,14 @@
  "idx": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2020-09-18 17:26:09.703215",
+ "modified": "2023-06-08 12:08:29.184014",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Attendance",
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
    "cancel": 1,
    "create": 1,
    "delete": 1,
@@ -256,5 +257,6 @@
  "search_fields": "employee,employee_name,attendance_date,status",
  "sort_field": "modified",
  "sort_order": "DESC",
- "title_field": "employee_name"
+ "title_field": "employee_name",
+ "track_changes": 1
 }

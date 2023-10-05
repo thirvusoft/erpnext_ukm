@@ -8,6 +8,7 @@ frappe.treeview_settings["Department"] = {
 			fieldtype:"Link",
 			options: "Company",
 			label: __("Company"),
+			hidden:1 
 		},
 	],
 	breadcrumb: "HR",

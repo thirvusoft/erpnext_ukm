@@ -94,9 +94,12 @@ class Attendance(Document):
 					),
 					alert=1,
 				)
-		elif self.leave_type:
-			self.leave_type = None
-			self.leave_application = None
+		# Customized By Thirvusoft
+		# Start
+		# elif self.leave_type:
+		# 	self.leave_type = None
+		# 	self.leave_application = None
+		# End
 
 	def validate_employee(self):
 		emp = frappe.db.sql(

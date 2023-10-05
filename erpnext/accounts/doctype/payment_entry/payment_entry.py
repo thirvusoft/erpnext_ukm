@@ -297,12 +297,16 @@ class PaymentEntry(AccountsController):
 				self.target_exchange_rate = get_exchange_rate(
 					self.paid_to_account_currency, self.company_currency, self.posting_date
 				)
-
+	# Customized By Thirvusoft
+	# Start
 	def validate_mandatory(self):
-		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
-			if not self.get(field):
-				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
+		pass
+		# for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
+		# 	if not self.get(field):
+		# 		frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
 
+	# End
+	
 	def validate_reference_documents(self):
 		if self.party_type == "Student":
 			valid_reference_doctypes = "Fees"

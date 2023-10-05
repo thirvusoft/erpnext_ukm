@@ -118,7 +118,15 @@ class SalarySlip(TransactionBase):
 				self.email_salary_slip()
 
 		self.update_payment_status_for_gratuity()
-
+		#thirvusoft
+		if self.department in ["PRODUCTION - MONTHLY - STAFF - UKM", "PRODUCTION - MONTHLY - STAFF - UNIT 1 - UKM"]:
+			for i in self.deductions:
+				if i.employee_advances and i.salary_component == "Employee Advance":
+					for j in eval(i.employee_advances):
+						adv=frappe.get_doc("Employee Advance", j[0])
+						adv.balance_amount-=i.amount
+						adv.save()
+		#thirvusoft
 	def update_payment_status_for_gratuity(self):
 		additional_salary = frappe.db.get_all(
 			"Additional Salary",
@@ -142,7 +150,15 @@ class SalarySlip(TransactionBase):
 		self.update_status()
 		self.update_payment_status_for_gratuity()
 		self.cancel_loan_repayment_entry()
-
+		#thirvusoft
+		if self.department in ["PRODUCTION - MONTHLY - STAFF - UKM", "PRODUCTION - MONTHLY - STAFF - UNIT 1 - UKM"]:
+			for i in self.deductions:
+				if i.employee_advances and i.salary_component == "Employee Advance":
+					for j in eval(i.employee_advances):
+						adv=frappe.get_doc("Employee Advance", j[0])
+						adv.balance_amount+=i.amount
+						adv.save()
+		#thirvusoft
 	def on_trash(self):
 		from frappe.model.naming import revert_series_if_last
 
@@ -188,10 +204,10 @@ class SalarySlip(TransactionBase):
 				),
 				(self.start_date, self.end_date, self.employee, self.name),
 			)
-			if ret_exist:
-				frappe.throw(
-					_("Salary Slip of employee {0} already created for this period").format(self.employee)
-				)
+			# if ret_exist:
+			# 	frappe.throw(
+			# 		_("Salary Slip of employee {0} already created for this period").format(self.employee)
+			# 	)
 		else:
 			for data in self.timesheets:
 				if frappe.db.get_value("Timesheet", data.time_sheet, "status") == "Payrolled":
@@ -743,21 +759,41 @@ class SalarySlip(TransactionBase):
 						last_benefit = frappe._dict(last_benefit)
 						amount = last_benefit.amount
 						self.update_component_row(frappe._dict(last_benefit.struct_row), amount, "earnings")
-
+#thirvusoft
 	def add_additional_salary_components(self, component_type):
-		additional_salaries = get_additional_salaries(
-			self.employee, self.start_date, self.end_date, component_type
-		)
-
-		for additional_salary in additional_salaries:
-			self.update_component_row(
-				get_salary_component_data(additional_salary.component),
-				additional_salary.amount,
-				component_type,
-				additional_salary,
-				is_recurring=additional_salary.is_recurring,
+		if self.department not in ["PRODUCTION - MONTHLY - STAFF - UKM", "PRODUCTION - MONTHLY - STAFF - UNIT 1 - UKM"]:
+			additional_salaries = get_additional_salaries(
+				self.employee, self.start_date, self.end_date, component_type
 			)
 
+			for additional_salary in additional_salaries:
+				self.update_component_row(
+					get_salary_component_data(additional_salary.component),
+					additional_salary.amount,
+					component_type,
+					additional_salary,
+					is_recurring=additional_salary.is_recurring,
+				)
+		else:
+			employee_advance=frappe.get_all("Employee Advance", filters={'employee':self.employee, "location":self.unit, "docstatus":1, "balance_amount":[">", 0]}, fields=["name", "monthly_deduction", "balance_amount"])
+			total_advance=[]
+			for i in employee_advance:
+				if i.balance_amount:
+					if i.balance_amount >=i.monthly_deduction:
+						total_advance.append([i.name,i.monthly_deduction])
+					else:
+						total_advance.append([i.name,i.balance_amount])
+			if total_advance:
+				for j in self.deductions:
+					if j.salary_component == "Employee Advance":
+						j.amount=sum([k[1] for k in total_advance])
+			if ("Employee Advance" not in [j.salary_component for j in self.deductions]):		
+				self.append("deductions", {
+				"salary_component":"Employee Advance",
+				"amount":sum([k[1] for k in total_advance]),
+				"employee_advances":str(total_advance)
+				})
+#thirvusoft
 	def add_tax_components(self, payroll_period):
 		# Calculate variable_based_on_taxable_salary after all components updated in salary slip
 		tax_components, other_deduction_components = [], []

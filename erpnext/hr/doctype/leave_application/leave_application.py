@@ -94,7 +94,8 @@ class LeaveApplication(Document):
 			)
 
 		self.validate_back_dated_application()
-		self.update_attendance()
+		if self.leave_type in ['On Duty','Permission']:
+			self.update_attendance()
 
 		# notify leave applier about approval
 		if frappe.db.get_single_value("HR Settings", "send_leave_notification"):
@@ -182,7 +183,11 @@ class LeaveApplication(Document):
 		alloc_on_from_date, alloc_on_to_date = self.get_allocation_based_on_application_dates()
 
 		if not (alloc_on_from_date or alloc_on_to_date):
-			frappe.throw(_("Application period cannot be outside leave allocation period"))
+			# Customized By Thirvusoft
+			# Start
+			pass
+			# frappe.throw(_("Application period cannot be outside leave allocation period"))
+			# End
 		elif self.is_separate_ledger_entry_required(alloc_on_from_date, alloc_on_to_date):
 			frappe.throw(
 				_("Application period cannot be across two allocation records"),
@@ -383,11 +388,15 @@ class LeaveApplication(Document):
 
 			frappe.msgprint(msg, title=_("Warning"), indicator="orange")
 		else:
-			frappe.throw(
-				_("Insufficient leave balance for Leave Type {0}").format(frappe.bold(self.leave_type)),
-				exc=InsufficientLeaveBalanceError,
-				title=_("Insufficient Balance"),
-			)
+			# Customized By Thirvusoft
+			# Start
+			pass
+			# frappe.throw(
+			# 	_("Insufficient leave balance for Leave Type {0}").format(frappe.bold(self.leave_type)),
+			# 	exc=InsufficientLeaveBalanceError,
+			# 	title=_("Insufficient Balance"),
+			# )
+			# End
 
 	def validate_leave_overlap(self):
 		if not self.name:

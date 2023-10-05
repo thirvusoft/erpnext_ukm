@@ -6,7 +6,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, get_datetime, get_link_to_form
-
+from datetime import datetime
+from datetime import timedelta
 from erpnext.hr.doctype.shift_assignment.shift_assignment import (
 	get_actual_start_end_datetime_of_shift,
 )
@@ -91,19 +92,77 @@ def add_log_based_on_employee_field(
 				employee_fieldname, employee_field_value
 			)
 		)
+	# Given timestamp in string
+	date_format_str = '%Y-%m-%d %H:%M:%S'
 
-	doc = frappe.new_doc("Employee Checkin")
+	# create datetime object from timestamp string
+	validate_timestamp = datetime.strptime(str(timestamp), date_format_str)
+	# Customized By Thirvusoft
+	# Start
+	check_date = frappe.db.get_single_value("United Knitting Mills Settings", "check_in_date")
+	resetting_checkin_time = frappe.db.get_single_value("United Knitting Mills Settings", "checkin_type_resetting_time")
+	resetting_checkin_time=datetime.strptime(str(resetting_checkin_time),'%H:%M:%S')
+	resetting_datetime = datetime.combine(validate_timestamp.date() if(validate_timestamp.time() > resetting_checkin_time.time()) else (validate_timestamp.date() + timedelta(days = -1)), resetting_checkin_time.time())
+	doc = frappe.new_doc("Employee Checkin Without Log Type")
 	doc.employee = employee.name
 	doc.employee_name = employee.employee_name
 	doc.time = timestamp
 	doc.device_id = device_id
-	doc.log_type = log_type
+	# if(att_doc.log_type=="IN"):
+	# 	doc.log_type = "OUT"
+	# else:
+	# 	doc.log_type="IN"
 	if cint(skip_auto_attendance) == 1:
 		doc.skip_auto_attendance = "1"
 	doc.insert()
-
 	return doc
+	try:
+		att_doc = frappe.get_last_doc("Employee Checkin",{"employee" : str(employee.name),"time": [">", str(resetting_datetime)]})
 
+		# create datetime object from timestamp string
+		given_time = datetime.strptime(str(att_doc.time), date_format_str)
+
+		# Buffer Time
+		buffer_time = frappe.db.get_single_value("United Knitting Mills Settings", "buffer_time")
+
+		# Add 2 minutes to datetime object
+		final_time = given_time + timedelta(minutes=buffer_time)
+
+		# Convert datetime object to string in specific format 
+		final_time_str = final_time.strftime('%Y-%m-%d %H:%M:%S')
+
+		if final_time_str < timestamp and check_date <= validate_timestamp.date():
+			doc = frappe.new_doc("Employee Checkin")
+			doc.employee = employee.name
+			doc.employee_name = employee.employee_name
+			doc.time = timestamp
+			doc.device_id = device_id
+			if(att_doc.log_type=="IN"):
+				doc.log_type = "OUT"
+			else:
+				doc.log_type="IN"
+			if cint(skip_auto_attendance) == 1:
+				doc.skip_auto_attendance = "1"
+			doc.insert()
+			return doc
+		else:
+			return att_doc
+	except:
+		if check_date <= validate_timestamp.date():
+			doc = frappe.new_doc("Employee Checkin")
+			doc.employee = employee.name
+			doc.employee_name = employee.employee_name
+			doc.time = timestamp
+			doc.device_id = device_id
+			doc.log_type = 'IN'
+			if cint(skip_auto_attendance) == 1:
+				doc.skip_auto_attendance = "1"
+			doc.insert()
+			return doc
+		else:
+			return frappe.get_last_doc("Employee Checkin")
+
+    # End
 
 def mark_attendance_and_link_log(
 	logs,
@@ -131,7 +190,7 @@ def mark_attendance_and_link_log(
 		return None
 
 	elif attendance_status in ("Present", "Absent", "Half Day"):
-		company = frappe.get_cached_value("Employee", employee, "company")
+		employee_doc = frappe.get_doc("Employee", employee)
 		duplicate = frappe.db.exists(
 			"Attendance",
 			{"employee": employee, "attendance_date": attendance_date, "docstatus": ("!=", "2")},
@@ -144,7 +203,7 @@ def mark_attendance_and_link_log(
 				"attendance_date": attendance_date,
 				"status": attendance_status,
 				"working_hours": working_hours,
-				"company": company,
+				"company": employee_doc.company,
 				"shift": shift,
 				"late_entry": late_entry,
 				"early_exit": early_exit,
